@@ -3,36 +3,24 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    // Public or private identify
-    // Data type (int, floats, bool, strings)
-    // Every variable has a NAME
-    // Optional value assigned
-
     public int lives = 3;
 
-    public bool shieldActive = false;
-    public bool canTripleShot = false;
+    public bool isShieldActive = false;
+    public bool isTripleShotActive = false;
     public bool isSpeedBoostActive = false;
 
-    [SerializeField]
-    private GameObject _explosionPrefab;
-    [SerializeField]
-    private GameObject _laserPrefab;
-    [SerializeField]
-    private GameObject _tripleShotPrefab;
-    [SerializeField]
-    private GameObject _shieldGameObject;
+    [SerializeField] private GameObject _explosionPrefab;
+    [SerializeField] private GameObject _laserPrefab;
+    [SerializeField] private GameObject _tripleShotPrefab;
+    [SerializeField] private GameObject _shieldGameObject;
 
-    [SerializeField]
-    private GameObject[] _engines;
+    [SerializeField] private GameObject[] _enginesDamage;
 
-    [SerializeField]
-    private float _fireRate = 0.25f;
+    [SerializeField] private float _fireRate = 0.25f;
 
     private float _canFire = 0.0f;
 
-    [SerializeField]
-    private float _speed = 5.0f;
+    [SerializeField] private float _moveSpeed = 5.0f;
 
     private UIManager _uiManager;
     private GameManager _gameManager;
@@ -41,14 +29,11 @@ public class Player : MonoBehaviour
 
     private float _hitCount;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        // Current pos = new position
-        transform.position = new Vector3(0, 0, 0);
+        transform.position = Vector3.zero;
 
         _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
-
         if (_uiManager != null)
         {
             _uiManager.UpdateLives(lives);
@@ -57,7 +42,6 @@ public class Player : MonoBehaviour
         _gameManager = GameObject.Find("Game_Manager").GetComponent<GameManager>();
 
         _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
-
         if (_spawnManager != null)
         {
             _spawnManager.StartSpawnRoutine();
@@ -68,11 +52,10 @@ public class Player : MonoBehaviour
         _hitCount = 0;
     }
 
-    // Update is called once per frame
     void Update()
     {
         Movement();
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButton(0) /*Input.GetKeyDown(KeyCode.Mouse0))*/)
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0) /*Input.GetKeyDown(KeyCode.Mouse0))*/)
         {
             Shoot();
         }
@@ -86,16 +69,15 @@ public class Player : MonoBehaviour
         
         if (isSpeedBoostActive == true)
         {
-            transform.Translate(Vector3.right * _speed * 1.5f * horizontalInput * Time.deltaTime);
-            transform.Translate(Vector3.up * _speed * 1.5f * verticalInput * Time.deltaTime);
+            transform.Translate(Vector3.right * _moveSpeed * 1.5f * horizontalInput * Time.deltaTime);
+            transform.Translate(Vector3.up * _moveSpeed * 1.5f * verticalInput * Time.deltaTime);
         }
         else
         {
-            transform.Translate(Vector3.right * _speed * horizontalInput * Time.deltaTime);
-            transform.Translate(Vector3.up * _speed * verticalInput * Time.deltaTime);
+            transform.Translate(Vector3.right * _moveSpeed * horizontalInput * Time.deltaTime);
+            transform.Translate(Vector3.up * _moveSpeed * verticalInput * Time.deltaTime);
         }
 
-        // Y position limits
         if (transform.position.y > 0)
         {
             transform.position = new Vector3(transform.position.x, 0, 0);
@@ -105,7 +87,6 @@ public class Player : MonoBehaviour
             transform.position = new Vector3(transform.position.x, -4.2f, 0);
         }
 
-        // X position limits
         if (transform.position.x > 9.5f)
         {
             transform.position = new Vector3(-9.4f, transform.position.y, 0);
@@ -121,17 +102,9 @@ public class Player : MonoBehaviour
         if (Time.time > _canFire)
         {
             _audioSource.Play();
-            if (canTripleShot == true)
-            {
-                /*
-                // Center
-                Instantiate(_laserPrefab, transform.position + new Vector3(0, 0.9f, 0), Quaternion.identity);
-                // Right
-                Instantiate(_laserPrefab, transform.position + new Vector3(0.55f, 0, 0), Quaternion.identity);
-                // Left
-                Instantiate(_laserPrefab, transform.position + new Vector3(-0.55f, 0, 0), Quaternion.identity);
-                */
 
+            if (isTripleShotActive)
+            {
                 Instantiate(_tripleShotPrefab, transform.position, Quaternion.identity);
             } 
             else
@@ -142,11 +115,11 @@ public class Player : MonoBehaviour
         }                
     }
 
-    public void Damage()
+    public void TakeDamage()
     { 
-        if (shieldActive == true)
+        if (isShieldActive)
         {
-            shieldActive = false;
+            isShieldActive = false;
             _shieldGameObject.SetActive(false);
             return;
         }
@@ -155,11 +128,11 @@ public class Player : MonoBehaviour
 
         if (_hitCount == 1)
         {
-            _engines[0].SetActive(true);
+            _enginesDamage[0].SetActive(true);
         }
         else if (_hitCount == 2)
         {
-            _engines[1].SetActive(true);
+            _enginesDamage[1].SetActive(true);
         }
 
         lives--;
@@ -167,7 +140,6 @@ public class Player : MonoBehaviour
 
         if (lives < 1)
         {
-            //Vector3 position = transform.position;
             Instantiate(_explosionPrefab, transform.position, Quaternion.identity);
             _gameManager.gameOver = true;
             _spawnManager.StartSpawnRoutine();
@@ -178,31 +150,31 @@ public class Player : MonoBehaviour
 
     public void TripleShotPowerupOn()
     {
-        canTripleShot = true;
-        StartCoroutine(TripleShotPowerDownRoutine());
+        isTripleShotActive = true;
+        StartCoroutine(TripleShotPowerupOffRoutine(5));
     }
 
     public void SpeedBoostPowerupOn()
     {
         isSpeedBoostActive = true;
-        StartCoroutine(SpeedBoostPowerDownRoutine());
+        StartCoroutine(SpeedBoostPowerupOffRoutine(5));
     }
 
     public void ShieldPowerupOn()
     {
-        shieldActive = true;
+        isShieldActive = true;
         _shieldGameObject.SetActive(true);
     }
 
-    public IEnumerator TripleShotPowerDownRoutine()
+    public IEnumerator TripleShotPowerupOffRoutine(float durationInSeconds)
     {
-        yield return new WaitForSeconds(5.0f);
-        canTripleShot = false;
+        yield return new WaitForSeconds(durationInSeconds);
+        isTripleShotActive = false;
     }
 
-    public IEnumerator SpeedBoostPowerDownRoutine()
+    public IEnumerator SpeedBoostPowerupOffRoutine(float durationInSeconds)
     {
-        yield return new WaitForSeconds(5.0f);
+        yield return new WaitForSeconds(durationInSeconds);
         isSpeedBoostActive = false;
     }
 

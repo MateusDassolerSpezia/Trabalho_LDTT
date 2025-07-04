@@ -2,20 +2,25 @@ using UnityEngine;
 
 public class Powerup : MonoBehaviour
 {
-    [SerializeField]
-    private float _speed = 3.0f;
-    [SerializeField]
-    private int powerID;
+    [SerializeField] private float _powerupSpeed = 3.0f;
+    [SerializeField] private EPowerupType _powerupType;
 
-    [SerializeField]
-    private AudioClip _clip;
+    [SerializeField] private AudioClip _SFX_PowerupPickupClip;
 
-    // Update is called once per frame
     void Update()
     {
-        transform.Translate(Vector3.down * Time.deltaTime * _speed);
+        PowerupMovement();
+        CheckPowerupBounds();
+    }
 
-        if (transform.position.y < -7) 
+    private void PowerupMovement()
+    {
+        transform.Translate(Vector3.down * Time.deltaTime * _powerupSpeed);       
+    }
+
+    private void CheckPowerupBounds()
+    {
+        if (transform.position.y < -7)
         {
             Destroy(this.gameObject);
         }
@@ -23,34 +28,27 @@ public class Powerup : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        //Debug.Log("Collided with: " + other.name);
-
         if (other.tag == "Player")
         {
-            // Acess the player
             Player player = other.GetComponent<Player>();
-            AudioSource.PlayClipAtPoint(_clip, Camera.main.transform.position, 1f);
 
             if (player != null)
             {
-                if (powerID == 0)
+                switch (_powerupType)
                 {
-                    // Enable triple shot
-                    player.TripleShotPowerupOn();
-                }
-                else if (powerID == 1)
-                {
-                    // Enable speed boost 
-                    player.SpeedBoostPowerupOn();
-                }
-                else if (powerID == 2)
-                {
-                    // Enable shields
-                    player.ShieldPowerupOn();
+                    case EPowerupType.tripleShot:
+                        player.TripleShotPowerupOn();
+                        break;
+                    case EPowerupType.speedBoost:
+                        player.SpeedBoostPowerupOn();
+                        break;
+                    case EPowerupType.Shield:
+                        player.ShieldPowerupOn();
+                        break;
                 }
             }
 
-            // Destroy our selves
+            AudioSource.PlayClipAtPoint(_SFX_PowerupPickupClip, Camera.main.transform.position, 1f);
             Destroy(this.gameObject);
         }
     }

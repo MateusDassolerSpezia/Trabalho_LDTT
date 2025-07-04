@@ -1,10 +1,9 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
     public bool gameOver = true;
-    public GameObject player;
+    public GameObject playerPrefab;
 
     private UIManager _uiManager;
 
@@ -15,14 +14,16 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (gameOver == true)
+        if (gameOver && Input.GetKeyDown(KeyCode.Space))
         {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                Instantiate(player, Vector3.zero, Quaternion.identity);
-                gameOver = false;
-                _uiManager.HideTitleScream();
-            }
+            StartGame();
         }
+    }
+
+    private void StartGame()
+    {
+        Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
+        gameOver = false;
+        _uiManager.HideTitleScream();
     }
 }
